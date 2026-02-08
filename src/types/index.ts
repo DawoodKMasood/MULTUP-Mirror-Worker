@@ -6,7 +6,6 @@ export interface MirrorJob {
   size: number
   service: string
   serviceConfig: ServiceConfig
-  callbackUrl: string
 }
 
 export interface ServiceConfig {

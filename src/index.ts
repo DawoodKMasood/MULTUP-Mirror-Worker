@@ -1,11 +1,8 @@
 import { downloadFromS3 } from './handlers/download.js'
-import { sendCallback } from './handlers/callback.js'
 import { AdapterRegistry } from './adapters/registry.js'
 import type { MirrorJob, MirrorResult } from './types/index.js'
 
 export interface Env {
-  API_CALLBACK_SECRET: string
-  API_BASE_URL: string
 }
 
 export default {
@@ -30,7 +27,7 @@ async function handleMirror(request: Request, env: Env): Promise<Response> {
   try {
     job = (await request.json()) as MirrorJob
 
-    if (!job.jobId || !job.fileUrl || !job.service || !job.callbackUrl) {
+    if (!job.jobId || !job.fileId || !job.fileUrl || !job.service) {
       return new Response('Missing required fields', { status: 400 })
     }
 
@@ -44,8 +41,10 @@ async function handleMirror(request: Request, env: Env): Promise<Response> {
         success: false,
         error: `Unknown service: ${job.service}`,
       }
-      await sendCallback(job.callbackUrl, errorResult, env.API_CALLBACK_SECRET)
-      return new Response('Unknown service', { status: 400 })
+      return new Response(JSON.stringify(errorResult), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      })
     }
 
     const fileStream = await downloadFromS3(job.fileUrl)
@@ -68,9 +67,7 @@ async function handleMirror(request: Request, env: Env): Promise<Response> {
       metadata: uploadResult.metadata,
     }
 
-    await sendCallback(job.callbackUrl, mirrorResult, env.API_CALLBACK_SECRET)
-
-    return new Response(JSON.stringify({ accepted: true, jobId: job.jobId }), {
+    return new Response(JSON.stringify(mirrorResult), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     })
@@ -85,11 +82,10 @@ async function handleMirror(request: Request, env: Env): Promise<Response> {
         success: false,
         error: errorMessage,
       }
-      try {
-        await sendCallback(job.callbackUrl, errorResult, env.API_CALLBACK_SECRET)
-      } catch {
-        // Ignore callback errors in error handler
-      }
+      return new Response(JSON.stringify(errorResult), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      })
     }
 
     return new Response(JSON.stringify({ error: errorMessage }), {
