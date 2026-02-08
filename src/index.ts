@@ -26,6 +26,15 @@ export default {
   },
 }
 
+function calculateExpiryDate(retentionDays?: number): string | undefined {
+  if (!retentionDays || retentionDays <= 0) {
+    return undefined
+  }
+  const expiryDate = new Date()
+  expiryDate.setDate(expiryDate.getDate() + retentionDays)
+  return expiryDate.toISOString()
+}
+
 async function handleMirror(request: Request, env: Env): Promise<Response> {
   let job: MirrorJob | undefined
   const startTime = Date.now()
@@ -72,6 +81,8 @@ async function handleMirror(request: Request, env: Env): Promise<Response> {
       job.serviceConfig
     )
 
+    const expiresAt = calculateExpiryDate(job.serviceConfig.retentionDays)
+
     const duration = Date.now() - startTime
     const mirrorResult: MirrorResult = {
       jobId: job.jobId,
@@ -79,6 +90,7 @@ async function handleMirror(request: Request, env: Env): Promise<Response> {
       service: job.service,
       success: uploadResult.success,
       downloadUrl: uploadResult.downloadUrl,
+      expiresAt,
       error: uploadResult.error,
       metadata: uploadResult.metadata,
     }
@@ -87,6 +99,7 @@ async function handleMirror(request: Request, env: Env): Promise<Response> {
       logger.info('Mirror job completed successfully', {
         durationMs: duration,
         downloadUrl: uploadResult.downloadUrl,
+        expiresAt,
       })
     } else {
       logger.error('Mirror job failed', {

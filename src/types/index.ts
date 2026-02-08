@@ -12,6 +12,7 @@ export interface ServiceConfig {
   apiKey?: string
   baseUrl?: string
   customHeaders?: Record<string, string>
+  retentionDays?: number
   [key: string]: unknown
 }
 
@@ -21,6 +22,7 @@ export interface MirrorResult {
   service: string
   success: boolean
   downloadUrl?: string
+  expiresAt?: string
   error?: string
   metadata?: Record<string, unknown>
 }
@@ -28,6 +30,7 @@ export interface MirrorResult {
 export interface UploadResult {
   success: boolean
   downloadUrl?: string
+  expiresAt?: string
   metadata?: Record<string, unknown>
   error?: string
 }
