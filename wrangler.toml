@@ -1,0 +1,12 @@
+name = "file-mirror-worker"
+main = "src/index.ts"
+compatibility_date = "2024-02-08"
+
+[vars]
+API_CALLBACK_PATH = "/api/mirrors/callback"
+
+[[secrets]]
+name = "API_CALLBACK_SECRET"
+
+[[secrets]]
+name = "API_BASE_URL"
