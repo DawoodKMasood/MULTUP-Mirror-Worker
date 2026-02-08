@@ -1,4 +1,5 @@
 import { BaseAdapter } from '../base.js'
+import { logger } from '../../utils/logger.js'
 import type { ServiceConfig, UploadResult } from '../../types/index.js'
 
 export class OneFichierAdapter extends BaseAdapter {
@@ -10,8 +11,14 @@ export class OneFichierAdapter extends BaseAdapter {
     size: number,
     config: ServiceConfig
   ): Promise<UploadResult> {
+    this.logUploadStart(filename, size)
+    const startTime = Date.now()
+
     try {
       const apiKey = config.apiKey
+
+      this.logUploadStart(filename, size)
+      logger.debug('1fichier: Getting upload server', { hasApiKey: !!apiKey })
 
       const uploadServerRes = await this.fetchWithTimeout(
         'https://api.1fichier.com/v1/upload/get_upload_server.cgi',
@@ -26,14 +33,19 @@ export class OneFichierAdapter extends BaseAdapter {
       )
 
       if (!uploadServerRes.ok) {
-        return { success: false, error: 'Failed to get upload server' }
+        const error = 'Failed to get upload server'
+        this.logUploadFailure(error)
+        return { success: false, error }
       }
 
       const { url, id } = (await uploadServerRes.json()) as { url: string; id: string }
+      logger.debug('1fichier: Got upload server', { server: url, uploadId: id })
 
       const blob = await this.streamToBlob(fileStream)
       const formData = new FormData()
       formData.append('file[]', blob, filename)
+
+      logger.debug('1fichier: Uploading file', { server: url, uploadId: id, filename })
 
       const uploadRes = await this.fetchWithTimeout(
         `https://${url}/upload.cgi?id=${id}`,
@@ -45,8 +57,12 @@ export class OneFichierAdapter extends BaseAdapter {
       )
 
       if (!uploadRes.ok) {
-        return { success: false, error: 'Failed to upload file' }
+        const error = 'Failed to upload file'
+        this.logUploadFailure(error)
+        return { success: false, error }
       }
+
+      logger.debug('1fichier: Finalizing upload', { server: url, uploadId: id })
 
       const endRes = await this.fetchWithTimeout(
         `https://${url}/end.pl?xid=${id}`,
@@ -57,7 +73,9 @@ export class OneFichierAdapter extends BaseAdapter {
       )
 
       if (!endRes.ok) {
-        return { success: false, error: 'Failed to finalize upload' }
+        const error = 'Failed to finalize upload'
+        this.logUploadFailure(error)
+        return { success: false, error }
       }
 
       const data = (await endRes.json()) as {
@@ -68,8 +86,14 @@ export class OneFichierAdapter extends BaseAdapter {
       const deleteUrl = this.extractValueFromPath('links.0.remove', data) as string | undefined
 
       if (!downloadUrl) {
-        return { success: false, error: 'No download URL returned' }
+        const error = 'No download URL returned'
+        this.logUploadFailure(error)
+        return { success: false, error }
       }
+
+      const duration = Date.now() - startTime
+      this.logUploadSuccess(downloadUrl, deleteUrl)
+      logger.info('1fichier: Upload completed', { durationMs: duration, uploadId: id })
 
       return {
         success: true,
@@ -78,9 +102,11 @@ export class OneFichierAdapter extends BaseAdapter {
         metadata: { server: url, id },
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      this.logUploadFailure(errorMessage)
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: errorMessage,
       }
     }
   }

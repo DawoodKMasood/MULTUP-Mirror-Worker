@@ -1,3 +1,4 @@
+import { logger } from '../utils/logger.js'
 import type { MirrorAdapter, UploadResult, ServiceConfig } from '../types/index.js'
 
 export abstract class BaseAdapter implements MirrorAdapter {
@@ -32,6 +33,12 @@ export abstract class BaseAdapter implements MirrorAdapter {
     options: RequestInit,
     timeoutMs: number = 30000
   ): Promise<Response> {
+    logger.debug('Adapter fetch with timeout', {
+      url,
+      method: options.method || 'GET',
+      timeoutMs,
+    })
+
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
 
@@ -41,11 +48,41 @@ export abstract class BaseAdapter implements MirrorAdapter {
         signal: controller.signal,
       })
       clearTimeout(timeoutId)
+      logger.debug('Adapter fetch completed', {
+        url,
+        status: response.status,
+      })
       return response
     } catch (error) {
       clearTimeout(timeoutId)
+      if (error instanceof Error && error.name === 'AbortError') {
+        logger.error('Adapter fetch timeout', { url, timeoutMs })
+      }
       throw error
     }
+  }
+
+  protected logUploadStart(filename: string, size: number): void {
+    logger.info('Adapter upload started', {
+      adapter: this.name,
+      filename,
+      size,
+    })
+  }
+
+  protected logUploadSuccess(downloadUrl?: string, deleteUrl?: string): void {
+    logger.info('Adapter upload completed successfully', {
+      adapter: this.name,
+      downloadUrl,
+      deleteUrl,
+    })
+  }
+
+  protected logUploadFailure(error: string): void {
+    logger.error('Adapter upload failed', {
+      adapter: this.name,
+      error,
+    })
   }
 
   protected extractValueFromPath(path: string | string[], data: unknown): unknown {
