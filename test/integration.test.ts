@@ -2,8 +2,6 @@ import { describe, it, expect } from 'vitest'
 import { OneFichierAdapter } from '../src/adapters/implementations/1fichier.js'
 
 describe('Integration Tests - 1fichier', () => {
-  const apiKey = process.env.ONEFICHIER_API_KEY
-
   it('should upload sample.zip file', async () => {
     const adapter = new OneFichierAdapter()
     const fs = await import('fs')
@@ -25,7 +23,7 @@ describe('Integration Tests - 1fichier', () => {
       fileStream,
       'sample.zip',
       fileBuffer.length,
-      apiKey ? { apiKey } : {}
+      { retentionDays: 15 }
     )
     
     expect(result.success).toBe(true)

@@ -26,7 +26,7 @@ export default {
   },
 }
 
-function calculateExpiryDate(retentionDays?: number): string | undefined {
+export function calculateExpiryDate(retentionDays?: number): string | undefined {
   if (!retentionDays || retentionDays <= 0) {
     return undefined
   }
