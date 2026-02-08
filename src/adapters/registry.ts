@@ -5,7 +5,7 @@ export class AdapterRegistry {
   private static adapters = new Map<string, MirrorAdapter>()
 
   static {
-    AdapterRegistry.register(new OneFichierAdapter())
+    this.register(new OneFichierAdapter())
   }
 
   static register(adapter: MirrorAdapter): void {
