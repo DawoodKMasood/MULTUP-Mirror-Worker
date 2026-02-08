@@ -21,7 +21,6 @@ export interface MirrorResult {
   service: string
   success: boolean
   downloadUrl?: string
-  deleteUrl?: string
   error?: string
   metadata?: Record<string, unknown>
 }
@@ -29,7 +28,6 @@ export interface MirrorResult {
 export interface UploadResult {
   success: boolean
   downloadUrl?: string
-  deleteUrl?: string
   metadata?: Record<string, unknown>
   error?: string
 }
@@ -42,5 +40,4 @@ export interface MirrorAdapter {
     size: number,
     config: ServiceConfig
   ): Promise<UploadResult>
-  delete?(deleteUrl: string, config: ServiceConfig): Promise<boolean>
 }

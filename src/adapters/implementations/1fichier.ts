@@ -83,7 +83,6 @@ export class OneFichierAdapter extends BaseAdapter {
       }
 
       const downloadUrl = this.extractValueFromPath('links.0.download', data) as string | undefined
-      const deleteUrl = this.extractValueFromPath('links.0.remove', data) as string | undefined
 
       if (!downloadUrl) {
         const error = 'No download URL returned'
@@ -92,13 +91,12 @@ export class OneFichierAdapter extends BaseAdapter {
       }
 
       const duration = Date.now() - startTime
-      this.logUploadSuccess(downloadUrl, deleteUrl)
+      this.logUploadSuccess(downloadUrl)
       logger.info('1fichier: Upload completed', { durationMs: duration, uploadId: id })
 
       return {
         success: true,
         downloadUrl,
-        deleteUrl,
         metadata: { server: url, id },
       }
     } catch (error) {

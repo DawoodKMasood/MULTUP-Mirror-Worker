@@ -11,10 +11,6 @@ export abstract class BaseAdapter implements MirrorAdapter {
     config: ServiceConfig
   ): Promise<UploadResult>
 
-  async delete?(deleteUrl: string, config: ServiceConfig): Promise<boolean> {
-    return false
-  }
-
   protected async streamToBlob(stream: ReadableStream<Uint8Array>): Promise<Blob> {
     const chunks: Uint8Array[] = []
     const reader = stream.getReader()
@@ -70,11 +66,10 @@ export abstract class BaseAdapter implements MirrorAdapter {
     })
   }
 
-  protected logUploadSuccess(downloadUrl?: string, deleteUrl?: string): void {
+  protected logUploadSuccess(downloadUrl?: string): void {
     logger.info('Adapter upload completed successfully', {
       adapter: this.name,
-      downloadUrl,
-      deleteUrl,
+      downloadUrl
     })
   }
 

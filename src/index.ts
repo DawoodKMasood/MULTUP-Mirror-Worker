@@ -79,7 +79,6 @@ async function handleMirror(request: Request, env: Env): Promise<Response> {
       service: job.service,
       success: uploadResult.success,
       downloadUrl: uploadResult.downloadUrl,
-      deleteUrl: uploadResult.deleteUrl,
       error: uploadResult.error,
       metadata: uploadResult.metadata,
     }
