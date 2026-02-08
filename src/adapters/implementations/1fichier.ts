@@ -15,7 +15,10 @@ export class OneFichierAdapter extends BaseAdapter {
     const startTime = Date.now()
 
     try {
-      const apiKey = config.apiKey
+      const apiKey =
+        typeof config.apiKey === 'string' && config.apiKey.length > 0
+          ? config.apiKey
+          : undefined
 
       this.logUploadStart(filename, size)
       logger.debug('1fichier: Getting upload server', { hasApiKey: !!apiKey })
